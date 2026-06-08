@@ -6,18 +6,25 @@ export default {
     
     const decoded = decodeURIComponent(imageUrl);
 
-    const res = await fetch(decoded, {
-      headers: {
-        'Referer': new URL(decoded).origin + '/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'image/*,*/*;q=0.8',
-        'Sec-Fetch-Dest': 'image',
-        'Sec-Fetch-Mode': 'no-cors',
-        'Sec-Fetch-Site': 'same-origin',
-      }
-    });
+    // Komikindo tidak perlu referer (sudah bisa no-referrer)
+    // Komiku perlu referer komiku.org
+    const isKomiku = decoded.includes('komiku') || 
+                     decoded.includes('himmga') || 
+                     decoded.includes('gaimg');
 
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'Accept': 'image/*,*/*;q=0.8',
+    };
+
+    if (isKomiku) {
+      headers['Referer'] = 'https://komiku.org/';
+      headers['Sec-Fetch-Site'] = 'same-site';
+    }
+
+    const res = await fetch(decoded, { headers });
     const data = await res.arrayBuffer();
+    
     return new Response(data, {
       headers: {
         'Content-Type': res.headers.get('content-type') || 'image/jpeg',
